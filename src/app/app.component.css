@@ -1,0 +1,20 @@
+header {
+  height: 6.5em;
+  padding: 0.5em;
+  background: linear-gradient(#444, #777);
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+}
+header .title {
+  font-size: 200%;
+  font-weight: bold;
+}
+
+main {
+  padding: 0.5em;
+}
+video#memory {
+  width: 100%;
+  margin: 1.5em 0;
+}

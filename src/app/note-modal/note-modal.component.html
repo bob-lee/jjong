@@ -1,0 +1,44 @@
+<!-- 
+-->
+<div class="overlay" *ngIf="data.value === 'active'" (click)="hide()" (afterIf)="loadImage()" [@overlay]="data">
+
+  <form id="popup" class="container" [formGroup]="noteForm" novalidate (click)="$event.stopPropagation()" blFocusMe>
+    <h2>
+      {{title}}
+      <div class="pull-right" touchStart>
+        <a class="btn btn-default" (click)="cancel($event)">Cancel</a>
+        <a class="btn btn-primary" (click)="save($event)" [ngClass]="{'loader-3': busy && takeLong}">Save</a>
+      </div>
+    </h2>
+
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input class="form-control" type="text" name="name" formControlName="name" required blFocusMe>
+      <div class="text-danger" [hidden]="!submitted || noteForm.controls.name.valid || !noteForm.controls.name.errors.required">Entry is mandatory</div>
+    </div>
+
+    <div class="form-group textarea">
+      <label for="text">Note</label>
+      <textarea type="text" name="text" formControlName="text" rows="8" required>
+          </textarea>
+      <div class="text-danger" [hidden]="!submitted || noteForm.controls.text.valid || !noteForm.controls.text.errors.required">Entry is mandatory</div>
+    </div>
+    <!-- 
+      ;video/* 
+      1. accept="image/*" capture="camera" on iphone, directly go to camera to take photo only
+      2. accept="image/*;capture=camera" this works better than 1. on mobile allowing choosing options
+      3. accept="image/*" same as 2. so better than 2.
+    -->
+    <div class="" touchStart>
+      <input class="btn" type="file" accept="image/*, video/*" (change)="fileSelected()" #fileInput>
+      <button class="" type="button" (click)="removeFile($event)" [hidden]="toHideButton">
+        <i class="material-icons">delete</i>
+      </button>
+    </div>
+
+    <img id="myimg" [hidden]="toHideImg">
+    <video id="myvideo" [hidden]="toHideImg"></video>
+
+  </form>
+
+</div>

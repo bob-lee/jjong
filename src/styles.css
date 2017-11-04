@@ -1,1 +1,12 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+  height: 100%;
+
+  font-family: Arial;
+  background-color: #777;
+  color: #fff;
+}
+
+.noScroll {
+  overflow: hidden; /* causes parent to scroll to top on modal popup */
+}
+

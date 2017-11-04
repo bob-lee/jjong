@@ -1,5 +1,6 @@
 {
   "projects": {
-    "staging": "jjong-37fd6"
+    "staging": "jjong-37fd6",
+    "default": "jjong-37fd6"
   }
 }
