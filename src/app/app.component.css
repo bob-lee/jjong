@@ -12,8 +12,19 @@ header .title {
 }
 
 main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
   padding: 0.5em;
 }
+
+@media only screen
+and (min-width: 568px) {
+  main { 
+    width: 80%;
+  }
+}
+
 video#memory {
   width: 100%;
   margin: 1.5em 0;
