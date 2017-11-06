@@ -72,7 +72,7 @@ export class NotesComponent implements OnInit, OnDestroy {
     if (this.subscription) this.subscription.unsubscribe();
   }
 
-  addOrEdit(event, index?: number, note?: any) {
+  addOrEdit({ event, index = -1, note = undefined }) {
     console.log(`addOrEdit(x:${event.screenX}, i:${index}, key:${note && note.$key || 'na'})`);
 
     this.noteService.setTheNote(note);
