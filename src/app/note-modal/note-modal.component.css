@@ -11,6 +11,7 @@
 .container {
   z-index: 209;
   width: 100%;
+  max-width: 550px;
   height: 75%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -27,28 +28,10 @@
   height: 101vh;
 }
 
-@media only screen 
-and (min-device-width: 768px) 
-and (max-device-width: 1024px) 
-and (orientation: portrait) 
-and (-webkit-min-device-pixel-ratio: 2) {
-  .container {
-    width: 80%;
-  }
-}
-@media only screen 
-and (min-device-width: 768px) 
-and (max-device-width: 1024px) 
-and (orientation: landscape) 
-and (-webkit-min-device-pixel-ratio: 2) {
-  .container {
+@media only screen
+and (min-width: 568px) {
+  .container { 
     width: 65%;
-  }
-}
-@media only screen 
-and (min-device-width: 1024px) {
-  .container {
-    width: 50%;
   }
 }
 

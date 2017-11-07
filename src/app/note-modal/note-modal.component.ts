@@ -31,8 +31,8 @@ const scroll = function (e) {
         style({ opacity: 0 }),
         query('.container', [style(zoomFadeInFrom)]),
         group([
-          animate(easeInFor(100), style({ opacity: 1 })),
-          query('.container', animate(easeInFor(300), style('*'))),
+          animate(easeInFor(150), style({ opacity: 1 })),
+          query('.container', animate(easeInFor(450), style('*'))),
         ]),
       ], { params: { x: '0px', y: '0px', ox: '50%', oy: '50%' } }),
       transition(':leave', group([
@@ -225,18 +225,15 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
     const clientX = event.clientX;
     const clientY = event.clientY;
 
-    const window = document.body.getBoundingClientRect();
-    const wh = window.width / 2;
-    const hh = window.height / 2;
-    const x = clientX - wh;
-    const y = clientY - hh;
-    const ox = clientX / window.width;
-    const oy = clientY / window.height;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-    this.data.params.x = `${x}px`;
-    this.data.params.y = `${y}px`;
-    this.data.params.ox = `${ox * 100}%`;
-    this.data.params.oy = `${oy * 100}%`;
+    this.data.params.x = `${clientX - width / 2}px`;
+    this.data.params.y = `${clientY - height / 2}px`;
+    this.data.params.ox = `${(clientX / width) * 100}%`;
+    this.data.params.oy = `${(clientY / height) * 100}%`;
+
+    //console.log(`zoom(${this.data.params.x}, ${this.data.params.y},${this.data.params.ox},${this.data.params.oy})`);
   }
 
   private makeVisible() {
