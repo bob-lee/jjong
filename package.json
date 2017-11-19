@@ -6,7 +6,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "tsc": "node_modules\\.bin\\tsc -p build\\tsconfig.json",
+    "clean": "rm -rf dist functions\\dist",
     "build": "ng build",
+    "build-prod": "ng build --prod --output-hashing none",
+    "build:workbox": "npm run clean && npm run build-prod && npm run tsc && node dist/build/build.js",
+    "serve": "firebase serve --only functions,hosting",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
@@ -26,15 +31,18 @@
     "bootstrap": "^3.3.7",
     "core-js": "^2.4.1",
     "firebase": "^4.6.1",
+    "fs-extra": "^4.0.2",
     "ngx-bootstrap": "^1.9.3",
     "rxjs": "^5.4.2",
     "web-animations-js": "^2.3.1",
+    "workbox-build": "^2.1.2",
     "zone.js": "^0.8.14"
   },
   "devDependencies": {
     "@angular/cli": "1.4.0",
     "@angular/compiler-cli": "^4.2.4",
     "@angular/language-service": "^4.2.4",
+    "@types/fs-extra": "^4.0.5",
     "@types/jasmine": "~2.5.53",
     "@types/jasminewd2": "~2.0.2",
     "@types/node": "~6.0.60",
