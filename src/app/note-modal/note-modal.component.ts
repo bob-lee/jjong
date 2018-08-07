@@ -29,7 +29,7 @@ const scroll = function (e) {
     trigger('overlay', [
       transition(':enter', [
         style({ opacity: 0 }),
-        query('.container', [style(zoomFadeInFrom)]),
+        query('.container', [style({ opacity: 0, transform: 'translateX({{ x }}) translateY({{ y }}) scale(0)', transformOrigin: '{{ ox }} {{ oy }}' })]),
         group([
           animate(easeInFor(150), style({ opacity: 1 })),
           query('.container', animate(easeInFor(450), style('*'))),
