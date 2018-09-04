@@ -73,7 +73,7 @@ export class NotesComponent implements OnInit, OnDestroy {
   }
 
   addOrEdit({ event, index = -1, note = undefined }) {
-    console.log(`addOrEdit(x:${event.screenX}, i:${index}, key:${note && note.$key || 'na'})`);
+    // console.log(`addOrEdit(x:${event.screenX}, i:${index}, key:${note && note.$key || 'na'})`);
 
     this.noteService.setTheNote(note);
     this.modal.show(event);

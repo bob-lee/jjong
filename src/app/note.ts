@@ -3,6 +3,7 @@ export interface Note {
   text: string;
   updatedAt: any; // for sorting
   imageURL: string;
+  orientation: number; // EXIF orientation
 }
 
 export enum Todo {

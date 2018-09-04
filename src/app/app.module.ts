@@ -13,6 +13,7 @@ import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { NotesComponent } from './notes/notes.component';
 import { NoteComponent } from './notes/note/note.component';
+import { ImageComponent } from './notes/note/image/image.component';
 import { NoteModalComponent } from './note-modal/note-modal.component';
 import { NoteService } from './note.service';
 import { ModalService } from './modal.service';
@@ -25,6 +26,7 @@ import { AfterIfDirective } from './after-if.directive';
     NotesComponent,
     NoteComponent,
     NoteModalComponent,
+    ImageComponent,
     FocusMeDirective,
     AfterIfDirective,
   ],
