@@ -1,20 +1,13 @@
 import { Injectable, OnDestroy } from '@angular/core';
 //import { CanActivate, Router } from '@angular/router';
 
-import { FirebaseApp } from 'angularfire2';
+import * as firebase from 'firebase/app';
 import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from 'angularfire2/firestore';
 import { AngularFireAuth } from 'angularfire2/auth';
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Subscription } from 'rxjs/Subscription';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/first';
-import 'rxjs/add/operator/switchMap';
-import 'rxjs/add/observable/combineLatest';
+import { AngularFireStorage } from 'angularfire2/storage';
 
-import * as firebase from 'firebase/app';
+import { Observable, Subject, BehaviorSubject, Subscription } from 'rxjs';
+import { first, map, switchMap } from 'rxjs/operators';
 
 import { Note, Todo, LoginWith } from './Note';
 
@@ -28,8 +21,6 @@ export class NoteService implements OnDestroy {
 
   user: Observable<firebase.User>;
   userName: string;
-
-  private storage: firebase.storage.Reference;
 
   // firestore
   private collection: AngularFirestoreCollection<any>;
@@ -45,14 +36,15 @@ export class NoteService implements OnDestroy {
   private lastSaved$ = new Subject<any>();
   announcedLastSaved = this.lastSaved$.asObservable();
 
-  countNotes: number = 0;
+  countNotes = 0;
 
   todo: Todo = Todo.List;
 
   get loggedin() { return !!this.userName; }
 
-  constructor(app: FirebaseApp,
+  constructor(
     private afAuth: AngularFireAuth,
+    private storage: AngularFireStorage,
     private afs: AngularFirestore) {
     console.warn(`'note.service'`); // watch when / how often the service is instantiated
 
@@ -71,16 +63,16 @@ export class NoteService implements OnDestroy {
 
     this.login();
 
-    this.storage = app.storage().ref();
-
     // observables for firestore
     this.collection = this.afs.collection(`notes`, ref => ref.orderBy('updatedAt', 'desc'));
 
     // filter out 'modified' state change due to firestore timestamp being set for newly-added note
-    this.stateChanges = this.collection.stateChanges()
-      .map(actions => actions.filter(action =>
-        (action.type === 'modified' && action.payload.doc.id === this.lastChanged.$key && this.lastChanged.$type === 'added') ? false : true
-      ));
+    this.stateChanges = this.collection.stateChanges().pipe(
+      map(actions => actions.filter(action =>
+        (action.type === 'modified' && 
+        action.payload.doc.id === this.lastChanged.$key && 
+        this.lastChanged.$type === 'added') ? false : true
+      )));
 
     this.subStateChange = this.stateChanges.subscribe(actions => actions.map(action => {
       // console.log('stateChange', action.payload);
@@ -93,8 +85,8 @@ export class NoteService implements OnDestroy {
       setTimeout(_ => this.lastChanged.$type = '', 2000);
     }));
 
-    this.notes$ = this.collection.snapshotChanges()
-      .map(actions => { // why hits twice on page change?
+    this.notes$ = this.collection.snapshotChanges().pipe(
+      map(actions => { // why hits twice on page change?
         this.countNotes = actions.length;
         console.log('snapshotChanges', this.countNotes);
         if (this.countNotes === 0) {
@@ -102,13 +94,16 @@ export class NoteService implements OnDestroy {
         }
 
         return actions.map(action => {
+          const { updatedAt, ...rest } = action.payload.doc.data();
+
           return {
             $key: action.payload.doc.id,
             $type: action.type,
-            ...action.payload.doc.data()
+            updatedAt: updatedAt && updatedAt.toDate(),
+            ...rest
           };
         })
-      });
+      }));
 
   }
 
@@ -120,8 +115,6 @@ export class NoteService implements OnDestroy {
     console.warn(`'note.service' ngOnDestroy()`);
     if (this.subscription && !this.subscription.closed) this.subscription.unsubscribe();
   }
-
-  fsSubscription: Subscription = null;
 
   getGroupNotes(): Observable<any[]> { // to be called once entering the group
     console.log(`getGroupNotes()`);
@@ -248,6 +241,8 @@ export class NoteService implements OnDestroy {
         console.log('case 2c.');
         const file = files.item(0);
 
+        note.thumbURL = null;
+
         console.log('finally');
         if (file) {
           await this.putImage(file, note);
@@ -282,9 +277,10 @@ export class NoteService implements OnDestroy {
       const orientation = await this.getOrientation(file);
       console.log(`putImage(orientation ${orientation})`);
 
-      const snapshot = await this.storage.child(`${destination}/${file.name}`).put(file);
-      console.log('uploaded file:', snapshot.downloadURL);
-      note.imageURL = snapshot.downloadURL;
+      const snapshot = await this.storage.ref(`${destination}/${file.name}`).put(file);
+      const downloadURL = await snapshot.ref.getDownloadURL();
+      console.log('uploaded file:', downloadURL);
+      note.imageURL = downloadURL;
       note.orientation = orientation;
       return true;
     } catch (error) {
@@ -313,7 +309,7 @@ export class NoteService implements OnDestroy {
             }
             const little = view.getUint16(offset += 6, false) == 0x4949;
             offset += view.getUint32(offset + 4, little);
-            var tags = view.getUint16(offset, little);
+            const tags = view.getUint16(offset, little);
             offset += 2;
             for (let i = 0; i < tags; i++)
               if (view.getUint16(offset + (i * 12), little) == 0x0112) {
@@ -329,7 +325,6 @@ export class NoteService implements OnDestroy {
       };
 
       reader.readAsArrayBuffer(file);
-
     });
   }
 
@@ -364,7 +359,7 @@ export class NoteService implements OnDestroy {
       this.theNote = {
         name: '',
         text: '',
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase['firestore'].FieldValue.serverTimestamp(),
         imageURL: '',
         orientation: 1
       };

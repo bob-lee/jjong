@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { animate, animation, animateChild, group, keyframes, query, stagger, state, style, transition, trigger, useAnimation } from '@angular/animations';
-import { Subscription } from 'rxjs/Subscription';
-import 'rxjs/add/operator/first';
+import { Subscription } from 'rxjs';
 
 import { Note, Todo } from '../Note';
 import { NoteService } from '../note.service';

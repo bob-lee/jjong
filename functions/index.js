@@ -8,7 +8,8 @@ const gcs = require('@google-cloud/storage')({
   projectId: 'jjong-37fd6'
 });
 const admin = require('firebase-admin');
-admin.initializeApp(functions.config().firebase);
+admin.initializeApp();
+
 const spawn = require('child-process-promise').spawn;
 const path = require('path');
 const os = require('os');
@@ -17,8 +18,8 @@ const fs = require('fs');
 const FIRESTORE_TRIGGER_PATH = '/notes/{key}';
 const STORAGE_IMAGE_FOLDER = 'images';
 const STORAGE_VIDEO_FOLDER = 'videos';
-const IMAGE_MAX_HEIGHT = 600;
-const IMAGE_MAX_BYTES = 100000; // resize if greater than 100kb
+const IMAGE_MAX_HEIGHT = 800;
+const IMAGE_MAX_BYTES = 500000; // resize if greater than 500kb
 const RESIZED_IMAGE_PREFIX = 'resized_';
 
 function getFilename(url) { // returns 'Sarah.jpg' or 'bunny.mp4'
@@ -39,6 +40,7 @@ function getFilename(url) { // returns 'Sarah.jpg' or 'bunny.mp4'
   }
   return null;
 }
+
 function getFilepath(url) { // returns 'images/Sarah.jpg' or 'videos/bunny.mp4'
   if (url) {
     const downloadUrl = url.indexOf('firebasestorage.googleapis.com'); // or signedUrl with 'storage.googleapis.com'
@@ -63,14 +65,11 @@ function getFilepath(url) { // returns 'images/Sarah.jpg' or 'videos/bunny.mp4'
 }
 
 function deleteImage(url) {
-  //const currentFile = getFilename(url); // e.g. 'Sarah.jpg'
-  //console.log('deleteImage', currentFile);
-
-  const bucketName = functions.config().firebase.storageBucket;
+  const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
+  const bucketName = firebaseConfig.storageBucket;
   const bucket = gcs.bucket(bucketName);
 
-  const filePath = getFilepath(url);//`${STORAGE_IMAGE_FOLDER}/${currentFile}`;
-
+  const filePath = getFilepath(url);
   const file = bucket.file(filePath);
 
   return file.delete().then(data => {
@@ -85,14 +84,14 @@ function getSize(file) {
   });
 }
 
-exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWrite(event => { // actually handles videos as well
+exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWrite((change, context) => { // actually handles videos as well
   try {
-    var current = event.data.data();
+    var current = change.after.data();
   } catch (e) {
     console.log('current document null');
   }
   try {
-    var previous = event.data.previous.data();
+    var previous = change.before.data();
   } catch (e) {
     console.log('previous document null');
   }
@@ -109,7 +108,6 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
     if (previous && previous.imageURL) { // note imageURL deleted
       return deleteImage(previous.imageURL);
     } else {
-      //console.log('current imageURL null');
       return 'current imageURL null';
     }
   }
@@ -117,16 +115,15 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
   const currentFile = getFilename(current.imageURL); // e.g. 'Sarah.jpg'
 
   if (currentFile.startsWith(RESIZED_IMAGE_PREFIX)) {
-    //console.log('Already resized');
     return 'Already resized';
   }
 
-  const bucketName = functions.config().firebase.storageBucket;
+  const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
+  const bucketName = firebaseConfig.storageBucket;
   const bucket = gcs.bucket(bucketName);
 
   const filePath = getFilepath(current.imageURL); // 'videos/Jjong.mp4'
   console.log('getFilepath', filePath);
-  // return 'test';
   
   if (filePath.startsWith(STORAGE_VIDEO_FOLDER)) {
     if (previous && previous.imageURL) { // note image changed, to delete previous image
@@ -140,7 +137,8 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
   const fileDir = path.dirname(filePath);
   const fileName = path.basename(filePath);
 
-  const thumbFilePath = path.normalize(path.join(fileDir, `${RESIZED_IMAGE_PREFIX}${fileName}`));
+  const thumbFilePath = path.normalize(path.join(fileDir, 
+    `${RESIZED_IMAGE_PREFIX}${IMAGE_MAX_HEIGHT}_${fileName}`));
 
   const tempLocalFile = path.join(os.tmpdir(), filePath);
   const tempLocalDir = path.dirname(tempLocalFile);
@@ -152,7 +150,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
   return getSize(file).then(size => {
 
     if (size < IMAGE_MAX_BYTES) {
-      console.log('image file small enough, ', size, 'bytes');
+      console.log(`image file small enough, ${size} bytes`);
       return 'image file small enough';
     }
     console.log(`image: ${currentFile}, ${size} bytes`);
@@ -180,7 +178,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
       const thumbResult = results[0];
       const thumbFileUrl = thumbResult[0];
 
-      return event.data.ref.set({
+      return change.after.ref.set({
         imageURL: thumbFileUrl
       }, { merge: true });
     }).then(result => {
