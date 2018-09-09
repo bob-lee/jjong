@@ -6,7 +6,7 @@ workbox.clientsClaim();
 workbox.precaching.precacheAndRoute([]);
 
 // app-shell
-w.router.registerRoute('/', w.strategies.networkFirst());
+workbox.routing.registerRoute('/', workbox.strategies.networkFirst());
 
 // storage-cache
 const STORAGE1 = /https:\/\/firebasestorage.googleapis.com\/v0\/b\/jjong-37fd6.appspot.com\/.*/;
@@ -23,14 +23,3 @@ workbox.routing.registerRoute(matchCb,
     ],
   })
 );
-/*
-const storageHandler = w.strategies.cacheFirst({
-  cacheName: 'storage-cache',
-  cacheExpiration: {
-    maxEntries: 20
-  },
-  cacheableResponse: { statuses: [0, 200] }
-});
-w.router.registerRoute('https://firebasestorage.googleapis.com/v0/b/jjong-37fd6.appspot.com/(.*)', storageHandler);
-w.router.registerRoute('https://storage.googleapis.com/jjong-37fd6.appspot.com/(.*)', storageHandler);
-*/
