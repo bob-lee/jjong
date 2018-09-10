@@ -15,6 +15,10 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
+const tinify = require('tinify');
+const TINIFY_KEY = 'TF9J2wXJS1winz9kbzCHfvIrcQ2r2ok4';
+const TINIFIED_IMAGE_PREFIX = 'tinified_';
+
 const FIRESTORE_TRIGGER_PATH = '/notes/{key}';
 const STORAGE_IMAGE_FOLDER = 'images';
 const STORAGE_VIDEO_FOLDER = 'videos';
@@ -123,7 +127,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
   const bucket = gcs.bucket(bucketName);
 
   const filePath = getFilepath(current.imageURL); // 'videos/Jjong.mp4'
-  console.log('getFilepath', filePath);
+  console.log(`getFilepath, '${filePath}'`);
   
   if (filePath.startsWith(STORAGE_VIDEO_FOLDER)) {
     if (previous && previous.imageURL) { // note image changed, to delete previous image
@@ -138,14 +142,18 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
   const fileName = path.basename(filePath);
 
   const thumbFilePath = path.normalize(path.join(fileDir, 
-    `${RESIZED_IMAGE_PREFIX}${IMAGE_MAX_HEIGHT}_${fileName}`));
-
-  const tempLocalFile = path.join(os.tmpdir(), filePath);
-  const tempLocalDir = path.dirname(tempLocalFile);
-  const tempLocalThumbFile = path.join(os.tmpdir(), thumbFilePath);
+    `${RESIZED_IMAGE_PREFIX}${IMAGE_MAX_HEIGHT}_${fileName}`)); // 'images/resized_800_Sarah.jpg'
+  const tinifiedFilePath = path.normalize(path.join(fileDir, 
+    `${TINIFIED_IMAGE_PREFIX}${fileName}`)); // 'images/tinified_Sarah.jpg'
+  
+  const tempLocalFile = path.join(os.tmpdir(), filePath); // 'c:/temp/images/Sarah.jpg'
+  const tempLocalDir = path.dirname(tempLocalFile); // 'c:/temp'
+  const tempLocalThumbFile = path.join(os.tmpdir(), thumbFilePath); // 'c:/temp/images/resized_800_Sarah.jpg'
+  const tempLocalTinifiedFile = path.join(os.tmpdir(), tinifiedFilePath); // 'c:/temp/images/tinified_Sarah.jpg'
 
   const file = bucket.file(filePath);
   const thumbFile = bucket.file(thumbFilePath);
+  const tinifiedFile = bucket.file(tinifiedFilePath);
 
   return getSize(file).then(size => {
 
@@ -158,6 +166,12 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
     return mkdirp(tempLocalDir).then(() => {
       return file.download({ destination: tempLocalFile });
     }).then(() => {
+      tinify.key = TINIFY_KEY;
+      return tinify.fromFile(tempLocalFile).toFile(tempLocalTinifiedFile);
+    }).then(() => {
+      return getSize(tempLocalTinifiedFile);
+    }).then((size) => {
+      console.log(`tinified: ${tempLocalTinifiedFile}, ${size} bytes`);
       return spawn('convert', [tempLocalFile, '-resize', `${IMAGE_MAX_HEIGHT}x${IMAGE_MAX_HEIGHT}>`, tempLocalThumbFile]);
     }).then(() => {
       return bucket.upload(tempLocalThumbFile, { destination: thumbFilePath });
@@ -166,6 +180,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
       // Once the image has been uploaded delete the local files to free up disk space.
       fs.unlinkSync(tempLocalFile);
       fs.unlinkSync(tempLocalThumbFile);
+      //fs.unlinkSync(tempLocalTinifiedFile);
       // Get the Signed URL for the resized image
       const config = {
         action: 'read',
