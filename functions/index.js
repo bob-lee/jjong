@@ -18,6 +18,7 @@ const fs = require('fs');
 const tinify = require('tinify');
 const TINIFY_KEY = 'TF9J2wXJS1winz9kbzCHfvIrcQ2r2ok4';
 const TINIFIED_IMAGE_PREFIX = 'tinified_';
+const USE_TINIFY_NODE_API = false; // Spark plan doesn't allow external api call
 
 const FIRESTORE_TRIGGER_PATH = '/notes/{key}';
 const STORAGE_IMAGE_FOLDER = 'images';
@@ -153,7 +154,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
 
   const file = bucket.file(filePath);
   const thumbFile = bucket.file(thumbFilePath);
-  const tinifiedFile = bucket.file(tinifiedFilePath);
+  const tinifiedFile = USE_TINIFY_NODE_API ? bucket.file(tinifiedFilePath) : null;
 
   return getSize(file).then(size => {
 
@@ -166,12 +167,18 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
     return mkdirp(tempLocalDir).then(() => {
       return file.download({ destination: tempLocalFile });
     }).then(() => {
+      if (!USE_TINIFY_NODE_API) return 'skip Trinify';
+
       tinify.key = TINIFY_KEY;
       return tinify.fromFile(tempLocalFile).toFile(tempLocalTinifiedFile);
     }).then(() => {
+      if (!USE_TINIFY_NODE_API) return 'skip Trinify';
+
       return getSize(tempLocalTinifiedFile);
     }).then((size) => {
-      console.log(`tinified: ${tempLocalTinifiedFile}, ${size} bytes`);
+      if (USE_TINIFY_NODE_API)
+        console.log(`tinified: ${tempLocalTinifiedFile}, ${size} bytes`);
+
       return spawn('convert', [tempLocalFile, '-resize', `${IMAGE_MAX_HEIGHT}x${IMAGE_MAX_HEIGHT}>`, tempLocalThumbFile]);
     }).then(() => {
       return bucket.upload(tempLocalThumbFile, { destination: thumbFilePath });
@@ -180,7 +187,7 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
       // Once the image has been uploaded delete the local files to free up disk space.
       fs.unlinkSync(tempLocalFile);
       fs.unlinkSync(tempLocalThumbFile);
-      //fs.unlinkSync(tempLocalTinifiedFile);
+      if (USE_TINIFY_NODE_API) fs.unlinkSync(tempLocalTinifiedFile);
       // Get the Signed URL for the resized image
       const config = {
         action: 'read',

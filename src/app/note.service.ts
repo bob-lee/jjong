@@ -1,18 +1,22 @@
 import { Injectable, OnDestroy } from '@angular/core';
-//import { CanActivate, Router } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import * as firebase from 'firebase/app';
 import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from 'angularfire2/firestore';
 import { AngularFireAuth } from 'angularfire2/auth';
 import { AngularFireStorage } from 'angularfire2/storage';
 
-import { Observable, Subject, BehaviorSubject, Subscription } from 'rxjs';
-import { first, map, switchMap } from 'rxjs/operators';
+import { Observable, Subject, BehaviorSubject, Subscription, throwError } from 'rxjs';
+import { first, map, switchMap, tap, catchError, take } from 'rxjs/operators';
 
 import { Note, Todo, LoginWith } from './Note';
 
 export const STORAGE_IMAGE_FOLDER = 'images';
 export const STORAGE_VIDEO_FOLDER = 'videos';
+
+const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/'
+const TINIFY_API_SHRINK = 'https://api.tinify.com/shrink';
+const TINIFY_API_AUTH = 'Basic YXBpOlRGOUoyd1hKUzF3aW56OWtiekNIZnZJcmNRMnIyb2s0';
 
 @Injectable()
 export class NoteService implements OnDestroy {
@@ -43,6 +47,7 @@ export class NoteService implements OnDestroy {
   get loggedin() { return !!this.userName; }
 
   constructor(
+    private http: HttpClient,
     private afAuth: AngularFireAuth,
     private storage: AngularFireStorage,
     private afs: AngularFirestore) {
@@ -69,9 +74,9 @@ export class NoteService implements OnDestroy {
     // filter out 'modified' state change due to firestore timestamp being set for newly-added note
     this.stateChanges = this.collection.stateChanges().pipe(
       map(actions => actions.filter(action =>
-        (action.type === 'modified' && 
-        action.payload.doc.id === this.lastChanged.$key && 
-        this.lastChanged.$type === 'added') ? false : true
+        (action.type === 'modified' &&
+          action.payload.doc.id === this.lastChanged.$key &&
+          this.lastChanged.$type === 'added') ? false : true
       )));
 
     this.subStateChange = this.stateChanges.subscribe(actions => actions.map(action => {
@@ -274,10 +279,22 @@ export class NoteService implements OnDestroy {
         throw `invalid file type '${file.type}'`;
       }
 
-      const orientation = await this.getOrientation(file);
+      let url: string;
+      let tinified: File;
+
+      await this.postTinify(file).pipe(take(1))
+        .forEach((result) => { 
+          url = result.output.url;
+          console.log('postTinify', url);
+        });
+      
+      await this.getTinifiedImage(url).pipe(take(1))
+        .forEach((blob) => tinified = new File([blob], file.name));
+      
+      const orientation = await this.getOrientation(tinified);
       console.log(`putImage(orientation ${orientation})`);
 
-      const snapshot = await this.storage.ref(`${destination}/${file.name}`).put(file);
+      const snapshot = await this.storage.ref(`${destination}/${tinified.name}`).put(tinified);
       const downloadURL = await snapshot.ref.getDownloadURL();
       console.log('uploaded file:', downloadURL);
       note.imageURL = downloadURL;
@@ -287,6 +304,30 @@ export class NoteService implements OnDestroy {
       console.error('failed to upload', error);
       return false;
     }
+  }
+
+  private postTinify(file): Observable<any> {
+    const options = {
+      headers: new HttpHeaders({
+        'Authorization': TINIFY_API_AUTH,
+      })
+    };
+    return this.http.post<any>(CORS_PROXY + TINIFY_API_SHRINK, file, options)
+  }
+
+  private getTinifiedImage(url: string): Observable<Blob> {
+    return this.http.get(CORS_PROXY + url, {
+      headers: new HttpHeaders({
+        'Authorization': TINIFY_API_AUTH,
+        'Accept': 'image/*'
+      }),
+      responseType: 'blob'
+    }).pipe(
+      tap(
+        data => console.log('getTinifiedImage'),
+        error => console.error('getTinifiedImage', error)
+      )
+    );
   }
 
   private getOrientation(file: any): Promise<number> {
@@ -320,7 +361,7 @@ export class NoteService implements OnDestroy {
           else if ((marker & 0xFF00) != 0xFF00) break;
           else offset += view.getUint16(offset, false);
         }
-        
+
         resolve(-1);
       };
 
