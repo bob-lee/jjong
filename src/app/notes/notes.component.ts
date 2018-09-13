@@ -80,7 +80,7 @@ export class NotesComponent implements OnInit, OnDestroy {
 
   remove(note) {
     this.noteService.todo = Todo.Remove;
-    this.noteService.save(note, null, false);
+    this.noteService.save(note, null, false, false);
   }
 
 }

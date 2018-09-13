@@ -4,10 +4,10 @@
 
   <form id="popup" class="container" [formGroup]="noteForm" novalidate (click)="$event.stopPropagation()" blFocusMe>
     <h2>
-      {{title}}
+      <span (idleClick)="toggleTinify($event)">{{title}}</span>
       <div class="pull-right" touchStart>
-        <a class="btn btn-default" (click)="cancel($event)">Cancel</a>
-        <a class="btn btn-primary" (click)="save($event)" [ngClass]="{'loader-3': busy && takeLong}">Save</a>
+        <a class="btn btn-default" (idleClick)="cancel($event)">Cancel</a>
+        <a class="btn btn-primary" (idleClick)="save($event)">Save</a>
       </div>
     </h2>
 

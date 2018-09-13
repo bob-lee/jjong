@@ -4295,6 +4295,12 @@ neo-async@^2.5.0:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.5.2.tgz#489105ce7bc54e709d736b195f82135048c50fcc"
 
+ng-idle-click@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/ng-idle-click/-/ng-idle-click-0.0.3.tgz#c20b1698d9745e97f76cbb3ed8cb979db85e727f"
+  dependencies:
+    tslib "^1.9.0"
+
 ngx-bootstrap@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/ngx-bootstrap/-/ngx-bootstrap-3.0.1.tgz#e98d2fc6340f32a9d358cd08e8fda7dcb23bdab3"
