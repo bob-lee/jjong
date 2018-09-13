@@ -49,8 +49,6 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   title: string;
   @ViewChild('fileInput')
   inputEl: ElementRef;
-  busy: boolean = false;
-  takeLong: boolean = false;
 
   note: any; // reference to noteService.theNote set in init()
   noteForm: FormGroup;
@@ -58,6 +56,7 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   imgToRemove: boolean = false;
   _fileChanged: boolean = false; // selected or removed
   imageFailedToLoad: boolean = false; // to indicate the case where the given image url failed to load
+  toTinify = true;
 
   data = {
     value: 'inactive',
@@ -82,15 +81,22 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
     this._fileChanged = false;
   }
 
+  toggleTinify({ done }) {
+    this.toTinify = !this.toTinify;
+    console.log('toTinify', this.toTinify);
+    done();
+  }
+
   private goBack() {
     this.hide();
   }
 
-  async save(e) {
-    e.stopPropagation();
+  async save({ event, done }) {
+    event.stopPropagation();
     console.log(`save ${this.noteForm.status} changed=${this.changed()}, ${this.inputEl && this.inputEl.nativeElement.files.length} file(s), imgToRemove=${this.imgToRemove}`);
     if (this.noteForm.invalid) {
       this.submitted = true;
+      done();
       return;
     }
 
@@ -99,15 +105,17 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
       this.note.name = this.noteForm.value.name;
       this.note.text = this.noteForm.value.text;
 
-      await this.saveNote(this.imgToRemove);
+      await this.saveNote(this.toTinify, this.imgToRemove);
     } else { // no change, go back without making server call
       this.noteService.todo = Todo.List;
     }
 
+    done();
     this.goBack();
   }
 
-  cancel(e) {
+  cancel({ done }) {
+    done();
     this.hide();
   }
 
@@ -144,18 +152,15 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
     return changed;
   }
 
-  private async saveNote(toRemoveExistingImage?: boolean) { // assumes this.note has form value
-    this.busy = true;
-    setTimeout(_ => { if (this.busy) this.takeLong = true; }, 1000);
+  private async saveNote(toTinify: boolean, toRemoveExistingImage?: boolean) { // assumes this.note has form value
     let inputEl: HTMLInputElement = this.inputEl.nativeElement;
 
     try {
-      const data = await this.noteService.save(this.note, inputEl.files, this.imageFailedToLoad, toRemoveExistingImage);
+      const data = await this.noteService.save(this.note, inputEl.files, this.imageFailedToLoad, toTinify, toRemoveExistingImage);
       console.log('saveNote():', data);
     } catch (error) {
       console.error('saveNote():', error);
     }
-    this.busy = false;
   }
 
   popup;
@@ -185,8 +190,6 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   }
 
   private init(showing: boolean = true) {
-    this.busy = false;
-    this.takeLong = false;
     this.body = document.querySelector('body');
     this.html = document.querySelector('html');
 
@@ -241,7 +244,6 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   }
 
   hide() {
-    if (this.busy) return;
     this.init(false);
 
     this.data.value = 'inactive';

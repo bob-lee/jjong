@@ -173,7 +173,7 @@ export class NoteService implements OnDestroy {
     console.log('removed');
   }
 
-  async save(noteToSave: any, files, imageFailedToLoad: boolean, toRemoveExistingImage?: boolean): Promise<any> {
+  async save(noteToSave: any, files, imageFailedToLoad: boolean, toTinify: boolean, toRemoveExistingImage?: boolean): Promise<any> {
     console.log(`save ${Todo[this.todo]}, imageFailedToLoad=${imageFailedToLoad}, toRemoveExistingImage=${toRemoveExistingImage}`);
 
     const note = noteToSave || this.theNote;
@@ -187,7 +187,7 @@ export class NoteService implements OnDestroy {
         if (file) {
           console.log('file', file);
 
-          await this.putImage(file, note);
+          await this.putImage(file, note, toTinify);
           // try {
           //   const snapshot = await this.storage.child(`${STORAGE_IMAGE_FOLDER}/${file.name}`).put(file);
           //   console.log('uploaded file:', snapshot.downloadURL);
@@ -202,7 +202,7 @@ export class NoteService implements OnDestroy {
 
     } else if (this.todo === Todo.Edit) { // edit
 
-      return this.saveEdit(note, files, imageFailedToLoad, toRemoveExistingImage);
+      return this.saveEdit(note, files, imageFailedToLoad, toTinify, toRemoveExistingImage);
 
     } else if (this.todo === Todo.Remove) { // remove
 
@@ -221,7 +221,7 @@ export class NoteService implements OnDestroy {
   2c.               new image			remove and add  imageURL, (toRemove), new file
   ----+-------------+-------------+---------------+---------------------------
   */
-  private async saveEdit(note: any, files, imageFailedToLoad: boolean, toRemoveExistingImage?: boolean): Promise<any> {
+  private async saveEdit(note: any, files, imageFailedToLoad: boolean, toTinify: boolean, toRemoveExistingImage?: boolean): Promise<any> {
     this.toSave = { $key: note.$key, $type: 'modified', index: -1 };
 
     const imageURL = note.imageURL;
@@ -250,7 +250,7 @@ export class NoteService implements OnDestroy {
 
         console.log('finally');
         if (file) {
-          await this.putImage(file, note);
+          await this.putImage(file, note, toTinify);
         }
       }
     } else { // no existing image
@@ -263,7 +263,7 @@ export class NoteService implements OnDestroy {
         const file = files.item(0);
         if (file) {
           console.log('selected file', file);
-          await this.putImage(file, note);
+          await this.putImage(file, note, toTinify);
         }
       }
     }
@@ -271,37 +271,48 @@ export class NoteService implements OnDestroy {
     return this.update(note);
   }
 
-  private async putImage(file: any, note: any): Promise<boolean> {
+  private async putImage(file: any, note: any, toTinify: boolean): Promise<boolean> {
     try {
-      const destination = file.type.startsWith('image/') ? STORAGE_IMAGE_FOLDER :
-        file.type.startsWith('video/') ? STORAGE_VIDEO_FOLDER : '';
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const destination = isImage ? STORAGE_IMAGE_FOLDER :
+        isVideo ? STORAGE_VIDEO_FOLDER : '';
       if (!destination) {
         throw `invalid file type '${file.type}'`;
       }
 
       let url: string;
-      let tinified: File;
+      let fileToUpload: File;
 
-      await this.postTinify(file).pipe(take(1))
-        .forEach((result) => { 
-          url = result.output.url;
-          console.log('postTinify', url);
-        });
+      if (isImage && toTinify) {
+        try {
+          await this.postTinify(file).pipe(take(1))
+            .forEach((result) => { 
+              url = result.output.url;
+              console.log('postTinify', url);
+            });
+          
+          await this.getTinifiedImage(url).pipe(take(1))
+            .forEach((blob) => fileToUpload = new File([blob], file.name, { type: blob.type }));
+        } catch (error) {
+          console.error('putImage failed to tinify:', error);
+          fileToUpload = file; // continue with original image
+        }
+      } else {
+        fileToUpload = file;
+      }
       
-      await this.getTinifiedImage(url).pipe(take(1))
-        .forEach((blob) => tinified = new File([blob], file.name));
+      const orientation = isImage ? await this.getOrientation(fileToUpload): -99;
+      if (isImage) console.log(`image orientation ${orientation}, ${fileToUpload.size}, ${fileToUpload.type}`);
       
-      const orientation = await this.getOrientation(tinified);
-      console.log(`putImage(orientation ${orientation})`);
-
-      const snapshot = await this.storage.ref(`${destination}/${tinified.name}`).put(tinified);
+      const snapshot = await this.storage.ref(`${destination}/${fileToUpload.name}`).put(fileToUpload);
       const downloadURL = await snapshot.ref.getDownloadURL();
-      console.log('uploaded file:', downloadURL);
+      console.log('file uploaded:', downloadURL);
       note.imageURL = downloadURL;
       note.orientation = orientation;
       return true;
     } catch (error) {
-      console.error('failed to upload', error);
+      console.error('putImage failed:', error);
       return false;
     }
   }
@@ -322,12 +333,7 @@ export class NoteService implements OnDestroy {
         'Accept': 'image/*'
       }),
       responseType: 'blob'
-    }).pipe(
-      tap(
-        data => console.log('getTinifiedImage'),
-        error => console.error('getTinifiedImage', error)
-      )
-    );
+    });
   }
 
   private getOrientation(file: any): Promise<number> {
@@ -335,8 +341,8 @@ export class NoteService implements OnDestroy {
 
     return new Promise((resolve, reject) => {
       reader.onload = function (e) {
-        console.log(`reader`, e);
         const view = new DataView(reader.result);
+        console.log(`reader got ${view.byteLength} bytes: ${view.getUint8(0)},${view.getUint8(1)},${view.getUint8(2)},${view.getUint8(3)},${view.getUint8(4)},${view.getUint8(5)}...`);
         if (view.getUint16(0, false) != 0xFFD8) {
           resolve(-2);
         }
@@ -361,7 +367,6 @@ export class NoteService implements OnDestroy {
           else if ((marker & 0xFF00) != 0xFF00) break;
           else offset += view.getUint16(offset, false);
         }
-
         resolve(-1);
       };
 
