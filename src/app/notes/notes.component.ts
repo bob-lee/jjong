@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { animate, animation, animateChild, group, keyframes, query, stagger, state, style, transition, trigger, useAnimation } from '@angular/animations';
+import { animate, keyframes, style, transition, trigger } from '@angular/animations';
 import { Subscription } from 'rxjs';
 
-import { Note, Todo } from '../Note';
+import { Todo } from '../Note';
 import { NoteService } from '../note.service';
 import { ModalService } from '../modal.service';
 import { listChild } from '../app.animation';

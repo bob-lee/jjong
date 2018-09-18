@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { NoteService } from '../../note.service';
 
 @Component({
   selector: 'my-note',
@@ -10,7 +11,7 @@ export class NoteComponent {
   @Output() toAddOrEdit: EventEmitter<any> = new EventEmitter();
   @Output() toRemove: EventEmitter<any> = new EventEmitter();
   
-  constructor() { }
+  constructor(public noteService: NoteService) { }
 
   addOrEdit(event, index: number, note: any) {
     this.toAddOrEdit.emit({ event, index, note });

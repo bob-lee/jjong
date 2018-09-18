@@ -2,11 +2,11 @@
   <span class="note-header">
     {{note.name}}, {{note.updatedAt | date : 'dd/MM/yyyy'}} {{note.updatedAt | date : 'shortTime' | lowercase}}
   </span>
-  <span style="position:relative" dropdown>
+  <span style="position:relative" dropdown *ngIf="noteService.isOwner">
     <span dropdownToggle style="cursor:pointer" class="glyphicon glyphicon-trash" aria-hidden="true"></span>
     <ul *dropdownMenu class="dropdown-menu">
       <li role="menuitem">
-        <a class="dropdown-item" (click)="remove(note)">remove</a>
+        <a class="dropdown-item" (click)="remove(note)">Delete</a>
       </li>
     </ul>
   </span>

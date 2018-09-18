@@ -1,8 +1,9 @@
 <header>
-  <span class="title">
-    Jjong
+  <span class="title" (click)="noteService.stepOne()">
+    jjong
   </span>
-  <span>untamed, never-give-up spirit</span>
+  <span (click)="noteService.stepTwo()">
+    untamed, never-give-up spirit</span>
 </header>
 
 <main>
@@ -11,7 +12,7 @@
       type="video/mp4">
   </video>
 
-  <p>You can leave a photo or note for him..</p>
+  <p>Click + button below to leave a note..</p>
 
   <app-notes></app-notes>
 </main>

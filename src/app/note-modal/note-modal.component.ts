@@ -1,12 +1,12 @@
 import { Component, OnInit, Input, Output, ElementRef, ViewChild, ViewEncapsulation } from '@angular/core';
-import { FormsModule, FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
+import { NgInputFileComponent } from 'ng-input-file';
 
-import { Note, Todo } from '../Note';
+import { Todo } from '../Note';
 import { NoteService } from '../note.service';
 
 export const zoomFadeIn = { opacity: 0, transform: 'translateX({{ x }}) translateY({{ y }}) scale(0)' };
-export const zoomFadeInFrom = { ...zoomFadeIn, transformOrigin: '{{ ox }} {{ oy }}' };
 export function easeInFor(duration) { return `${duration}ms cubic-bezier(0.35, 0, 0.25, 1)`; };
 
 const handlerScroll = e => {
@@ -20,6 +20,8 @@ const scroll = function (e) {
   e.preventDefault(); // how to eat up scroll event to prevent parent scrolling on modal popup???
   return false;
 };
+
+const FILE_EXISTS = 'Uploaded file exists';
 
 @Component({
   selector: 'note-modal',
@@ -47,8 +49,10 @@ const scroll = function (e) {
 })
 export class NoteModalComponent implements OnInit { // note form modal only for firestore
   title: string;
-  @ViewChild('fileInput')
-  inputEl: ElementRef;
+
+  @ViewChild(NgInputFileComponent)
+  private fileInput: NgInputFileComponent;
+  files: any;
 
   note: any; // reference to noteService.theNote set in init()
   noteForm: FormGroup;
@@ -93,7 +97,7 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
 
   async save({ event, done }) {
     event.stopPropagation();
-    console.log(`save ${this.noteForm.status} changed=${this.changed()}, ${this.inputEl && this.inputEl.nativeElement.files.length} file(s), imgToRemove=${this.imgToRemove}`);
+    console.log(`save ${this.noteForm.status} changed=${this.changed()}, ${this.files && this.files.length} file(s), imgToRemove=${this.imgToRemove}`);
     if (this.noteForm.invalid) {
       this.submitted = true;
       done();
@@ -115,31 +119,21 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   }
 
   cancel({ done }) {
-    done();
     this.hide();
+    done();
   }
 
-  fileSelected() {
+  fileChanged({ files }) {
     this._fileChanged = true;
-    console.log(`fileSelected ${this.inputEl.nativeElement.files.length} file(s), imgToRemove=${this.imgToRemove}`);
-  }
-
-  removeFile(e) {
-    if (this.inputEl) this.inputEl.nativeElement.value = ''; // remove any selected file
-    this.imgToRemove = true; // hide any downloaded image
-    this._fileChanged = true;
-    console.log(`removeFile ${this.inputEl && this.inputEl.nativeElement.files.length} file(s), imgToRemove=${this.imgToRemove}`);
-  }
-
-  get toHideButton(): boolean {
-    if (this.noteService.theNoteHasImage) return false; // show button
-    if (this.inputEl && this.inputEl.nativeElement.files.length > 0) return false; // show button
-    return true; // hide button
+    if (files.length === 0) {
+      this.imgToRemove = true; // hide any downloaded image
+    }
+     this.files = files;
+     console.log(`fileChanged ${files.length} file(s), imgToRemove=${this.imgToRemove}`);
   }
 
   get toHideImg(): boolean {
     if (this.imgToRemove || this.imageFailedToLoad) return true; // hide image
-    if (this.noteService.theNoteHasImage && this.inputEl && this.inputEl.nativeElement.files.length > 0) return true; // hide image
     if (!this.noteService.theNoteHasImage) return true; // hide image
     return false; // show image
   }
@@ -153,10 +147,8 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   }
 
   private async saveNote(toTinify: boolean, toRemoveExistingImage?: boolean) { // assumes this.note has form value
-    let inputEl: HTMLInputElement = this.inputEl.nativeElement;
-
     try {
-      const data = await this.noteService.save(this.note, inputEl.files, this.imageFailedToLoad, toTinify, toRemoveExistingImage);
+      const data = await this.noteService.save(this.note, this.files, this.imageFailedToLoad, toTinify, toRemoveExistingImage);
       console.log('saveNote():', data);
     } catch (error) {
       console.error('saveNote():', error);
@@ -169,6 +161,8 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
 
   loadImage() {
     if (!this.note || !this.note.imageURL) return;
+    this.fileInput.filename = FILE_EXISTS;
+
     const isImage = this.note.imageURL.indexOf('images') > -1;
     const isVideo = this.note.imageURL.indexOf('videos') > -1;
     console.log(`imageURL ${this.note.imageURL}, ${isImage}, ${isVideo}`);
