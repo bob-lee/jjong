@@ -6,10 +6,10 @@ import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument 
 import { AngularFireAuth } from 'angularfire2/auth';
 import { AngularFireStorage } from 'angularfire2/storage';
 
-import { Observable, Subject, BehaviorSubject, Subscription, throwError } from 'rxjs';
-import { first, map, switchMap, tap, catchError, take } from 'rxjs/operators';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 
-import { Note, Todo, LoginWith } from './Note';
+import { Note, Todo } from './Note';
 
 export const STORAGE_IMAGE_FOLDER = 'images';
 export const STORAGE_VIDEO_FOLDER = 'videos';
@@ -25,6 +25,7 @@ export class NoteService implements OnDestroy {
 
   user: Observable<firebase.User>;
   userName: string;
+  isOwner = false;
 
   // firestore
   private collection: AngularFirestoreCollection<any>;
@@ -58,6 +59,7 @@ export class NoteService implements OnDestroy {
       if (user) {
         console.log('logged in', user);
         this.userName = user.displayName || 'Anonymous';
+        this.isOwner = !user.isAnonymous && user.email === 'bob.bumsuk.lee@gmail.com';
 
         this.initAfterLogin();
       } else {
@@ -112,13 +114,29 @@ export class NoteService implements OnDestroy {
 
   }
 
-  // canActivate(): Observable<boolean> {
-  //   return this.user.map(auth => !!auth);
-  // }
-
   ngOnDestroy() {
     console.warn(`'note.service' ngOnDestroy()`);
     if (this.subscription && !this.subscription.closed) this.subscription.unsubscribe();
+  }
+
+  step1 = false;
+  stepOne() {
+    this.step1 = true;
+    setTimeout(_ => this.step1 = false, 1500);
+  }
+  stepTwo() {
+    if (this.step1) {
+      this.logoutin();
+    }
+  }
+  async logoutin() {
+    if (this.isOwner) {
+      await this.logout();
+      await this.loginAnonymous();
+    } else {
+      await this.logout();
+      await this.loginGoogle();
+    }
   }
 
   getGroupNotes(): Observable<any[]> { // to be called once entering the group
@@ -160,6 +178,10 @@ export class NoteService implements OnDestroy {
 
   async loginAnonymous() {
     await this.afAuth.auth.signInAnonymously();
+  }
+  
+  async loginGoogle() {
+    await this.afAuth.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
   }
 
   async logout() {
