@@ -70,6 +70,18 @@ export class NotesComponent implements OnInit, OnDestroy {
     if (this.subscription) this.subscription.unsubscribe();
   }
 
+  animStart(event) {
+  }
+  animDone(event) {
+    this.noteService.resetListState();
+  }
+
+  add({ event, done }) {
+    console.log(`add`);
+    this.addOrEdit({ event });
+    done();
+  }
+
   addOrEdit({ event, index = -1, note = undefined }) {
     // console.log(`addOrEdit(x:${event.screenX}, i:${index}, key:${note && note.$key || 'na'})`);
 
@@ -77,9 +89,10 @@ export class NotesComponent implements OnInit, OnDestroy {
     this.modal.show(event);
   }
 
-  remove(note) {
+  async remove({ note, done }) {
     this.noteService.todo = Todo.Remove;
-    this.noteService.save(note, null, false, false);
+    await this.noteService.save(note, null, false, false);
+    done();
   }
 
 }

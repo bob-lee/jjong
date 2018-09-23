@@ -13,12 +13,33 @@ export class NoteComponent {
   
   constructor(public noteService: NoteService) { }
 
-  addOrEdit(event, index: number, note: any) {
+  edit({ event, done }) {
+    console.log(`edit`);
+    this.doEdit(event, -1, this.note);
+    done();
+  }
+
+  remove({ event, done }) {
+    console.log(`remove`);
+
+    const ref = this.noteService.openSnackBar('Do you want to remove this note permanently?', 'Remove');
+    const dismiss = ref.afterDismissed().subscribe(_ => {
+      done();
+      console.log('Snackbar dismissed');
+    });
+    ref.onAction().subscribe(_ => {
+      dismiss.unsubscribe();
+      console.log('User confirmed to remove');
+      this.doRemove(this.note, done);
+    })
+  }
+
+  private doEdit(event, index: number, note: any) {
     this.toAddOrEdit.emit({ event, index, note });
   }
 
-  remove(note) {
-    this.toRemove.emit(note);
+  private doRemove(note, done) {
+    this.toRemove.emit({ note, done });
   }
 
 }
