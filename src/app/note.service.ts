@@ -10,6 +10,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 
 import { Note, Todo } from './Note';
+import { MatSnackBar, MatSnackBarRef, SimpleSnackBar  } from '@angular/material';
 
 export const STORAGE_IMAGE_FOLDER = 'images';
 export const STORAGE_VIDEO_FOLDER = 'videos';
@@ -21,7 +22,7 @@ const TINIFY_API_AUTH = 'Basic YXBpOlRGOUoyd1hKUzF3aW56OWtiekNIZnZJcmNRMnIyb2s0'
 @Injectable()
 export class NoteService implements OnDestroy {
 
-  notes$: Observable<any[]>;
+  items$: Observable<any[]>;
 
   user: Observable<firebase.User>;
   userName: string;
@@ -42,6 +43,8 @@ export class NoteService implements OnDestroy {
   announcedLastSaved = this.lastSaved$.asObservable();
 
   countNotes = 0;
+  private listStateInternal = 'none'; // none, added, modified, removed
+  listState = 'none';
 
   todo: Todo = Todo.List;
 
@@ -51,7 +54,8 @@ export class NoteService implements OnDestroy {
     private http: HttpClient,
     private afAuth: AngularFireAuth,
     private storage: AngularFireStorage,
-    private afs: AngularFirestore) {
+    private afs: AngularFirestore,
+    public snackBar: MatSnackBar) {
     console.warn(`'note.service'`); // watch when / how often the service is instantiated
 
     this.user = afAuth.authState;
@@ -87,12 +91,13 @@ export class NoteService implements OnDestroy {
         $key: action.payload.doc.id,
         $type: action.type
       };
+      this.listStateInternal = action.type;
 
       this.announceLastSaved(this.lastChanged.$key, this.lastChanged.$type, action.payload.newIndex);
       setTimeout(_ => this.lastChanged.$type = '', 2000);
     }));
 
-    this.notes$ = this.collection.snapshotChanges().pipe(
+    this.items$ = this.collection.snapshotChanges().pipe(
       map(actions => { // why hits twice on page change?
         this.countNotes = actions.length;
         console.log('snapshotChanges', this.countNotes);
@@ -102,6 +107,7 @@ export class NoteService implements OnDestroy {
 
         return actions.map(action => {
           const { updatedAt, ...rest } = action.payload.doc.data();
+          this.listState = this.listStateInternal;
 
           return {
             $key: action.payload.doc.id,
@@ -139,11 +145,6 @@ export class NoteService implements OnDestroy {
     }
   }
 
-  getGroupNotes(): Observable<any[]> { // to be called once entering the group
-    console.log(`getGroupNotes()`);
-    return this.notes$;
-  }
-
   private announceLastSaved($key, $type, index): void {
     if ($type === 'removed' || $type !== this.toSave.$type) return;
     if ($type === 'modified' && $key !== this.toSave.$key) return;
@@ -158,18 +159,7 @@ export class NoteService implements OnDestroy {
     }
   }
 
-  getState(note: any): string {
-    if (note.$type === 'added') {
-      return 'added';
-    } else if (note.$type === 'modified' && this.lastChanged.$key === note.$key && this.lastChanged.$type === 'modified') {
-      return 'modified'; // animate it
-    } else {
-      return 'void';
-    }
-  }
-
   initAfterLogin() {
-    this.search();
   }
 
   async login() {
@@ -210,13 +200,6 @@ export class NoteService implements OnDestroy {
           console.log('file', file);
 
           await this.putImage(file, note, toTinify);
-          // try {
-          //   const snapshot = await this.storage.child(`${STORAGE_IMAGE_FOLDER}/${file.name}`).put(file);
-          //   console.log('uploaded file:', snapshot.downloadURL);
-          //   note.imageURL = snapshot.downloadURL;
-          // } catch (error) {
-          //   console.error('failed to upload', error);
-          // }
         }
       }
 
@@ -407,11 +390,6 @@ export class NoteService implements OnDestroy {
     return ref;
   }
 
-  search(): Observable<any[]> { // search by group name
-
-    return this.getGroupNotes();
-  }
-
   setTheNote(note?: any) { // to be called by user of FormModalComponent
     if (note && note.$key) { // edit
       this.theNote = {
@@ -439,6 +417,16 @@ export class NoteService implements OnDestroy {
     const key = note.$key;
     delete note.$key;
     await this.collection.doc(key).update(note);
+  }
+
+  openSnackBar(message: string, action: string, duration = 3000): MatSnackBarRef<SimpleSnackBar> {
+    return this.snackBar.open(message, action, {
+      duration,
+    });
+  }
+
+  resetListState() {
+    this.listState = 'none';
   }
 
 }

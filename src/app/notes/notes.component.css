@@ -4,6 +4,7 @@
 
   padding-bottom: 2em;
   counter-reset: count;
+  scroll-behavior: smooth;
 }
 
 .item {
@@ -11,10 +12,7 @@
   padding: 0.2em;
   position: relative;
 }
-.item::before {
-/*  counter-increment: count;
-  content: counter(count)".";*/
-}
+
 .item hr {
   margin: 0.2em 0;
   border-top: 1px solid #444;
@@ -33,7 +31,6 @@
 .image-span img,
 .image-span video {
   width: 100%;
-  /*max-height: 100vh;*/
 }
 
 .fab {

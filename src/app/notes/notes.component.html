@@ -1,14 +1,18 @@
-<div *ngIf="noteService.notes$ | async; let notes" [@listChild]="noteService.countNotes" class="list" touchStart>
-  <my-note [note]="note" (toAddOrEdit)="addOrEdit($event)" (toRemove)="remove($event)"
-    *ngFor="let note of notes; let i = index; trackBy: trackByFn" 
-    [@item]="noteService.getState(note)" 
-    class="item" 
+<div class="list"
+  [@listChild]="noteService.listState"
+  (@listChild.start)="animStart($event)" 
+  (@listChild.done)="animDone($event)" 
+  touchStart>
+  <my-note class="item"
+    [note]="note" (toAddOrEdit)="addOrEdit($event)" (toRemove)="remove($event)"
+    *ngFor="let note of noteService.items$ | async; let i = index; trackBy: trackByFn"
+    [ngClass]="{ 'modified' : note.$type === 'modified' && noteService.listState === 'modified' }"
     [attr.tabindex]="i">
   </my-note>
 </div>
 
 <note-modal #modal></note-modal>
 
-<button class="fab" (click)="addOrEdit({ event: $event })" aria-label="Add" matTooltip="Add">+</button>
+<button class="fab" (idleClick)="add($event)" aria-label="Add">+</button>
 
 <scrolltop></scrolltop>
