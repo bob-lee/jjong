@@ -1,17 +1,46 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { NoteService } from '../../note.service';
+import { LazyLoadService, IntersectionState } from 'ng-lazy-load';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'my-note',
   templateUrl: './note.component.html',
   styleUrls: ['./note.component.css']
 })
-export class NoteComponent {
+export class NoteComponent implements OnDestroy {
   @Input() note: any;
+  @Input() index: number;
   @Output() toAddOrEdit: EventEmitter<any> = new EventEmitter();
   @Output() toRemove: EventEmitter<any> = new EventEmitter();
+
+  toLoad = false; // local state for lazy-loading offscreen images
+  private _subcription: Subscription;
   
-  constructor(public noteService: NoteService) { }
+  get imageURL() { 
+    return this.toLoad && this.note.imageURL && this.note.imageURL.indexOf('images') > -1 ? this.note.imageURL : ''; 
+  }
+  get videoURL() { 
+    return this.toLoad && this.note.imageURL && this.note.imageURL.indexOf('videos') > -1 ? this.note.imageURL : ''; 
+  }
+
+  constructor(public noteService: NoteService,
+    private lazyLoadService: LazyLoadService) {
+    this._subcription = this.lazyLoadService.announcedIntersection
+      .subscribe(params => {
+        const { index, state } = params;
+        if (!this.toLoad && (this.index - index) <= 2) {
+          this.toLoad = true;
+          console.log(`(${index},${IntersectionState[state]}) loading [${this.index}]`);
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    if (this._subcription) {
+      this._subcription.unsubscribe();
+    }
+  }
 
   edit({ event, done }) {
     console.log(`edit`);

@@ -2,15 +2,16 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import * as firebase from 'firebase/app';
-import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from 'angularfire2/firestore';
-import { AngularFireAuth } from 'angularfire2/auth';
-import { AngularFireStorage } from 'angularfire2/storage';
+import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import { AngularFireAuth } from '@angular/fire/auth';
+import { AngularFireStorage } from '@angular/fire/storage';
 
 import { Observable, Subject, Subscription } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 
 import { Note, Todo } from './Note';
 import { MatSnackBar, MatSnackBarRef, SimpleSnackBar  } from '@angular/material';
+import { LazyLoadService, IntersectionState } from 'ng-lazy-load';
 
 export const STORAGE_IMAGE_FOLDER = 'images';
 export const STORAGE_VIDEO_FOLDER = 'videos';
@@ -50,7 +51,7 @@ export class NoteService implements OnDestroy {
 
   get loggedin() { return !!this.userName; }
 
-  constructor(
+  constructor(private lazyLoadService: LazyLoadService,
     private http: HttpClient,
     private afAuth: AngularFireAuth,
     private storage: AngularFireStorage,
@@ -160,6 +161,10 @@ export class NoteService implements OnDestroy {
   }
 
   initAfterLogin() {
+    setTimeout(_ => {
+      this.lazyLoadService.announceOrder('register');
+      console.log('announceOrder');
+    }, 1500);
   }
 
   async login() {

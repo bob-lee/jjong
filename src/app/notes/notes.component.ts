@@ -70,8 +70,6 @@ export class NotesComponent implements OnInit, OnDestroy {
     if (this.subscription) this.subscription.unsubscribe();
   }
 
-  animStart(event) {
-  }
   animDone(event) {
     this.noteService.resetListState();
   }
