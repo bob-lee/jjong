@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, ElementRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
 import { NgInputFileComponent } from 'ng-input-file';
@@ -159,14 +159,15 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   body;
   html;
 
+  get hasImage() { return this.note && this.note.imageURL && this.note.imageURL.indexOf('images') > -1; }
+  get hasVideo() { return this.note && this.note.imageURL && this.note.imageURL.indexOf('videos') > -1; }
+
   loadImage() {
     if (!this.note || !this.note.imageURL) return;
     this.fileInput.filename = FILE_EXISTS;
 
-    const isImage = this.note.imageURL.indexOf('images') > -1;
-    const isVideo = this.note.imageURL.indexOf('videos') > -1;
-    console.log(`imageURL ${this.note.imageURL}, ${isImage}, ${isVideo}`);
-    if (isImage) {
+    console.log(`imageURL ${this.note.imageURL}, ${this.hasImage}, ${this.hasVideo}`);
+    if (this.hasImage) {
       const img = <HTMLImageElement>document.querySelector("#myimg");
       img.addEventListener('load', _ => console.log('image loaded'));
       img.addEventListener('error', error => {
@@ -174,7 +175,7 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
         this.imageFailedToLoad = true;
       });
       img.src = this.note.imageURL;
-    } else if (isVideo) {
+    } else if (this.hasVideo) {
       const video = <HTMLVideoElement>document.querySelector("#myvideo");
       video.src = this.note.imageURL;
       video.load();
