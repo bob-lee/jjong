@@ -26,14 +26,14 @@ export class NoteComponent implements OnDestroy {
 
   constructor(public noteService: NoteService,
     private lazyLoadService: LazyLoadService) {
-    this._subcription = this.lazyLoadService.announcedIntersection
-      .subscribe(params => {
-        const { index, state } = params;
-        if (!this.toLoad && (this.index - index) <= 2) {
-          this.toLoad = true;
-          console.log(`(${index},${IntersectionState[state]}) loading [${this.index}]`);
-        }
-      });
+
+    this._subcription = this.lazyLoadService.announcedIntersection.subscribe(params => {
+      const { index, state } = params;
+      if (!this.toLoad && (this.index - index) <= 2) {
+        this.toLoad = true;
+        console.log(`(${index},${IntersectionState[state]}) loading [${this.index}]`);
+      }
+    });
   }
 
   ngOnDestroy() {
