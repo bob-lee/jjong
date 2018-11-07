@@ -4311,27 +4311,27 @@ neo-async@^2.5.0:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.5.2.tgz#489105ce7bc54e709d736b195f82135048c50fcc"
 
-ng-idle-click@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/ng-idle-click/-/ng-idle-click-0.0.3.tgz#c20b1698d9745e97f76cbb3ed8cb979db85e727f"
+ng-idle-click@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/ng-idle-click/-/ng-idle-click-0.0.8.tgz#dda941327112ac27aef1e30b9a429fe2446efea2"
   dependencies:
     tslib "^1.9.0"
 
-ng-input-file@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/ng-input-file/-/ng-input-file-0.0.5.tgz#d33dcf8a2255891905cc120b8a8e70f51a4883eb"
+ng-input-file@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/ng-input-file/-/ng-input-file-0.1.1.tgz#93d8817d8bd80a2a99401d350765235c20d00fe4"
   dependencies:
     tslib "^1.9.0"
 
-ng-lazy-load@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/ng-lazy-load/-/ng-lazy-load-1.0.0.tgz#bc20c20e4dc767a5dfc42a17b7352169840d9837"
+ng-lazy-load@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/ng-lazy-load/-/ng-lazy-load-1.0.2.tgz#c75e1f9af1f622e27f65fca2b3661ce11eb2606f"
   dependencies:
     tslib "^1.9.0"
 
-ng-scrolltop@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/ng-scrolltop/-/ng-scrolltop-0.0.2.tgz#e8c982450efdefafc2a60428434e2ef024847a86"
+ng-scrolltop@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/ng-scrolltop/-/ng-scrolltop-0.0.6.tgz#abe0b00bee62664dd960fce07360215f2c47bb3b"
   dependencies:
     tslib "^1.9.0"
 

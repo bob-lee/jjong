@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { Todo } from '../Note';
 import { NoteService } from '../note.service';
+import { LazyLoadService } from 'ng-lazy-load';
 import { ModalService } from '../modal.service';
 import { listChild } from '../app.animation';
 
@@ -38,6 +39,7 @@ export class NotesComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   constructor(public noteService: NoteService,
+    private lazyLoadService: LazyLoadService,
     private modalService: ModalService) {
 
     console.log('GroupComponent()');
@@ -62,6 +64,7 @@ export class NotesComponent implements OnInit, OnDestroy {
         }
       });
 
+    this.lazyLoadService.registerAfter(1500);
     console.warn(`'GroupComponent' ${this.isTouchDevice}`);
   }
 

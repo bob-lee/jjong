@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
-import { NgInputFileComponent } from 'ng-input-file';
+import { NgInputFileComponent, GoogleApiConfig, GoogleDriveService } from 'ng-input-file';
 
 import { Todo } from '../Note';
 import { NoteService } from '../note.service';
@@ -21,6 +21,11 @@ const scroll = function (e) {
   return false;
 };
 
+const GOOGLE_CONFIG: GoogleApiConfig = {
+  developerKey: 'AIzaSyAuDinv8z5S_Ym00MHJqZYZyh6UBooTPGM',
+  appId: '586189256171',
+  clientId: '586189256171-82i5f88n6geumca00fk4ksm7kqan9dmm.apps.googleusercontent.com'
+}
 const FILE_EXISTS = 'Uploaded file exists';
 
 @Component({
@@ -73,7 +78,11 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
   };
 
   constructor(private formBuilder: FormBuilder,
-    private noteService: NoteService) { }
+    public el: ElementRef, // modal to be a dropbox
+    private googleDrive: GoogleDriveService,
+    private noteService: NoteService) {
+    this.googleDrive.init(GOOGLE_CONFIG);
+  }
 
   ngOnInit() {
     console.log(`'NoteModalComponent'`);

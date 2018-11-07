@@ -13,7 +13,7 @@ import { AngularFireStorageModule } from '@angular/fire/storage';
 import { NgIdleClickModule } from 'ng-idle-click';
 import { NgInputFileModule } from 'ng-input-file';
 import { NgScrolltopModule } from 'ng-scrolltop';
-import { NgLazyLoadModule } from 'ng-lazy-load';
+import { LazyLoadModule } from 'ng-lazy-load';
 import { environment } from '../environments/environment';
 
 import { AppComponent } from './app.component';
@@ -56,7 +56,7 @@ import { AfterIfDirective } from './after-if.directive';
     NgIdleClickModule,
     NgInputFileModule,
     NgScrolltopModule,
-    NgLazyLoadModule,
+    LazyLoadModule,
   ],
   providers: [
     NoteService,
