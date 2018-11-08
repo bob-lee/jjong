@@ -130,6 +130,7 @@ export class NoteService implements OnDestroy {
   stepOne() {
     this.step1 = true;
     setTimeout(_ => this.step1 = false, 1500);
+    //this.openSnackBar('Test me!', 'Dismiss', 600000);
   }
   stepTwo() {
     if (this.step1) {
@@ -140,9 +141,15 @@ export class NoteService implements OnDestroy {
     if (this.isOwner) {
       await this.logout();
       await this.loginAnonymous();
+      if (!this.isOwner) {
+        this.openSnackBar('So long owner!', 'Dismiss');
+      }
     } else {
       await this.logout();
       await this.loginGoogle();
+      if (this.isOwner) {
+        this.openSnackBar('Welcome owner!', 'Dismiss');
+      }
     }
   }
 
@@ -174,7 +181,7 @@ export class NoteService implements OnDestroy {
   async loginAnonymous() {
     await this.afAuth.auth.signInAnonymously();
   }
-  
+
   async loginGoogle() {
     await this.afAuth.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
   }
@@ -297,11 +304,11 @@ export class NoteService implements OnDestroy {
       if (isImage && toTinify) {
         try {
           await this.postTinify(file).pipe(take(1))
-            .forEach((result) => { 
+            .forEach((result) => {
               url = result.output.url;
               console.log('postTinify', url);
             });
-          
+
           await this.getTinifiedImage(url).pipe(take(1))
             .forEach((blob) => fileToUpload = new File([blob], file.name, { type: blob.type }));
         } catch (error) {
@@ -311,10 +318,10 @@ export class NoteService implements OnDestroy {
       } else {
         fileToUpload = file;
       }
-      
+
       const orientation = isImage ? await this.getOrientation(fileToUpload): -99;
       if (isImage) console.log(`image orientation ${orientation}, ${fileToUpload.size}, ${fileToUpload.type}`);
-      
+
       const snapshot = await this.storage.ref(`${destination}/${fileToUpload.name}`).put(fileToUpload);
       const downloadURL = await snapshot.ref.getDownloadURL();
       console.log('file uploaded:', downloadURL);
@@ -351,7 +358,7 @@ export class NoteService implements OnDestroy {
 
     return new Promise((resolve, reject) => {
       reader.onload = function (e) {
-        const view = new DataView(reader.result);
+        const view = new DataView(reader.result as ArrayBuffer);
         console.log(`reader got ${view.byteLength} bytes: ${view.getUint8(0)},${view.getUint8(1)},${view.getUint8(2)},${view.getUint8(3)},${view.getUint8(4)},${view.getUint8(5)}...`);
         if (view.getUint16(0, false) != 0xFFD8) {
           resolve(-2);
