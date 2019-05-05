@@ -1,16 +1,15 @@
 importScripts('/workbox-sw.js');
 
-workbox.skipWaiting();
-workbox.clientsClaim();
-
+workbox.core.skipWaiting();
+workbox.core.clientsClaim();
 workbox.precaching.precacheAndRoute([]);
 
 // app-shell
-workbox.routing.registerRoute('/', workbox.strategies.networkFirst());
+workbox.routing.registerRoute('/', new workbox.strategies.NetworkFirst());
 
 // webfont-cache
-const webFontHandler = workbox.strategies.cacheFirst({
-  cacheName: 'webfonts',
+const webFontHandler = new workbox.strategies.CacheFirst({
+  cacheName: 'webfont-cache',
   plugins: [
     new workbox.expiration.Plugin({maxEntries: 20}),
     new workbox.cacheableResponse.Plugin({statuses: [0, 200]}),
@@ -26,7 +25,7 @@ const matchCb = ({url, event}) => {
   return STORAGE1.test(url) || STORAGE2.test(url) ? {url} : null;
 };
 workbox.routing.registerRoute(matchCb,
-  workbox.strategies.cacheFirst({
+  new workbox.strategies.CacheFirst({
     cacheName: 'storage-cache',
     plugins: [
       new workbox.expiration.Plugin({maxEntries: 60}),

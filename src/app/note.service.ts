@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import * as firebase from 'firebase/app';
+//import { auth, firestore } from 'firebase/app';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { AngularFireStorage } from '@angular/fire/storage';
@@ -183,6 +184,8 @@ export class NoteService implements OnDestroy {
   }
 
   async loginGoogle() {
+    ///*const { auth } = */const auth = await import('firebase/auth');
+    //await this.afAuth.auth.signInWithPopup(new auth.GoogleAuthProvider());
     await this.afAuth.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
   }
 
@@ -414,10 +417,12 @@ export class NoteService implements OnDestroy {
       };
       this.todo = Todo.Edit;
     } else { // add
+      //const firestore = await import('firebase/firestore');
       this.theNote = {
         name: '',
         text: '',
         updatedAt: firebase['firestore'].FieldValue.serverTimestamp(),
+        //updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         imageURL: '',
         orientation: 1
       };
