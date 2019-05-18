@@ -110,6 +110,7 @@ export class NoteService implements OnDestroy {
         return actions.map(action => {
           const { updatedAt, ...rest } = action.payload.doc.data();
           this.listState = this.listStateInternal;
+          //console.log('updatedAt', updatedAt);
 
           return {
             $key: action.payload.doc.id,

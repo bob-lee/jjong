@@ -113,6 +113,13 @@ export class NoteModalComponent implements OnInit { // note form modal only for 
       return;
     }
 
+    /*if (this.noteService.userName === 'Anonymous') {
+      this.submitted = true;
+      this.noteService.openSnackBar('You need to log in first, please contact web administrator', 'Dismiss');
+      done();
+      return;
+    }*/
+    
     if (this.changed()) {
       // take form value to model
       this.note.name = this.noteForm.value.name;

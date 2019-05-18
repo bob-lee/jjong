@@ -1,15 +1,21 @@
 'use strict';
 
-const functions = require('firebase-functions');
 const mkdirp = require('mkdirp-promise');
 // Include a Service Account Key to use a Signed URL
 const gcs = require('@google-cloud/storage')({
   keyFilename: 'service-account-credentials.json',
   projectId: 'jjong-37fd6'
 });
-const admin = require('firebase-admin');
-admin.initializeApp();
 
+const admin = require('firebase-admin');
+const functions = require('firebase-functions');
+admin.initializeApp(functions.config().firebase);
+
+const db = admin.firestore();
+//db.settings({timestampsInSnapshots: true});
+const collection = db.collection('notes');
+
+const cors = require('cors')({origin: true});
 const spawn = require('child-process-promise').spawn;
 const path = require('path');
 const os = require('os');
@@ -214,5 +220,20 @@ exports.handleImage = functions.firestore.document(FIRESTORE_TRIGGER_PATH).onWri
       }
     }).catch(error => console.log('Error in handleImage(): ', error));
 
+  });
+});
+
+exports.getNotes = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    collection.orderBy('updatedAt', 'desc').get().then(snapshot => {
+      const list = [];
+      snapshot.forEach(doc => {
+        const i = doc.data();
+        //console.log('updatedAt', i.updatedAt.toDate()); // toDate() works here
+        list.push(i);
+      });
+      console.log('getNotes', list.length);
+      res.status(200).json(list);
+    })
   });
 });
