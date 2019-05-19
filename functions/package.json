@@ -11,5 +11,8 @@
     "mkdirp-promise": "^5.0.1",
     "tinify": "^1.6.0-beta.2"
   },
+  "engines": {
+    "node": "8"
+  },
   "private": true
 }
