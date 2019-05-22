@@ -1,6 +1,7 @@
 {
   "name": "jjong",
-  "author": "Bob Lee",
+  "author": "Bob Lee <bob.bumsuk.lee@gmail.com>",
+  "description": "memories of my dog, jjong",
   "version": "1.0.2",
   "license": "MIT",
   "scripts": {
@@ -11,7 +12,7 @@
     "build-prod": "ng build --prod --output-hashing none",
     "build": "npm run clean && npm run build-prod && npm run tsc && node dist/build/build.js",
     "build:map": "npm run clean && ng build --prod --sourceMap --output-hashing none && npm run tsc && node dist/build/build.js",
-    "serve": "firebase serve",
+    "serve": "npm run build && firebase serve",
     "deploy": "npm run build && firebase deploy --only hosting",
     "build-serve": "npm run build && npm run serve",
     "test": "ng test",
