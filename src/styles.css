@@ -1,11 +1,10 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
 body {
-  height: 100%;
-
   font-family: 'Quicksand', sans-serif;
   background-color: #777;
   color: #fff;
+  margin: 0;
 }
 
 .noScroll {
